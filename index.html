@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chaos Theory: Journey Through Universes</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <canvas id="canvas"></canvas>
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    let particlesArray = [];
+    const numberOfParticles = 1500;
+    let noiseOffset = 0;
+    const maxAmplitude = 100;
+    let currentPortal = 0;
+    let zoomLevel = 1;
+    let zoomTarget = 1;
+    const zoomSpeed = 0.01;
+
+    // Defining a storyline through the chaos simulation
+    const story = [
+      "In the beginning, there was void. A dark, empty canvas, ready to witness the story of creation.",
+      "A ripple - an invisible force - brought particles to life, scattered across the void, waiting for purpose.",
+      "As if drawn by a cosmic dance, the particles began to move, colliding, merging, and splitting apart again.",
+      "One change led to another, cascading into an unpredictable ballet - the Butterfly Effect.",
+      "The particles spiraled into a vortex, each portal leading to another dimension, another unknown universe.",
+      "Fractals formed, repeating patterns, each more intricate, inviting exploration into an infinite journey.",
+      "The deeper you zoom, the more there is to see, an endless universe of mathematical wonder."
+    ];
+
+    let currentStoryIndex = 0;
+
+    // Central Story Text (Gravity Center)
+    function drawStoryText() {
+      ctx.fillStyle = 'rgba(255, 255, 255, 1)';
+      ctx.font = '24px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText(story[currentStoryIndex], canvas.width / 2, canvas.height / 2);
+    }
+
+    // Class representing each particle in our chaotic system
+    class Particle {
+      constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.size = Math.random() * 2 + 1;
+        this.baseX = this.x;
+        this.baseY = this.y;
+        this.density = Math.random() * 50 + 1;
+        this.angle = Math.random() * Math.PI * 2;
+        this.speed = Math.random() * 0.3 + 0.1;
+        this.amplitude = Math.random() * maxAmplitude + 20;
+        this.frequency = Math.random() * 0.05 + 0.01;
+        this.color = 'rgba(255, 255, 255, 0.9)'; // Black and white artistic color scheme
+        this.shape = Math.random() > 0.66 ? 'circle' : Math.random() > 0.33 ? 'square' : 'triangle'; // Randomly choose between three shapes
+      }
+
+      // Draw each particle on the canvas
+      draw() {
+        ctx.fillStyle = this.color;
+        if (this.shape === 'circle') {
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+          ctx.closePath();
+          ctx.fill();
+        } else if (this.shape === 'square') {
+          ctx.fillRect(this.x - this.size, this.y - this.size, this.size * 2, this.size * 2);
+        } else if (this.shape === 'triangle') {
+          ctx.beginPath();
+          ctx.moveTo(this.x, this.y - this.size);
+          ctx.lineTo(this.x - this.size, this.y + this.size);
+          ctx.lineTo(this.x + this.size, this.y + this.size);
+          ctx.closePath();
+          ctx.fill();
+        }
+      }
+
+      // Update the movement of each particle, applying chaotic effects
+      update() {
+        this.angle += this.frequency; // Continuous rotation for trippy effect
+        let movementX = Math.cos(this.angle + noiseOffset) * this.amplitude;
+        let movementY = Math.sin(this.angle + noiseOffset) * this.amplitude;
+        this.x = this.baseX + movementX;
+        this.y = this.baseY + movementY;
+
+        // Slowly move base positions to create fluid dynamics
+        this.baseX += Math.cos(noiseOffset) * this.speed;
+        this.baseY += Math.sin(noiseOffset) * this.speed;
+
+        // Butterfly Effect: Small deviation in baseX and baseY
+        let butterflyEffect = Math.random() * 0.5 - 0.25;
+        this.baseX += butterflyEffect;
+        this.baseY += butterflyEffect;
+      }
+
+      // Handle collision with other particles
+      checkCollision() {
+        particlesArray.forEach((otherParticle) => {
+          if (this === otherParticle) return;
+          const dx = otherParticle.x - this.x;
+          const dy = otherParticle.y - this.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          if (distance < this.size + otherParticle.size) {
+            // Simple collision response: repel each other
+            const angle = Math.atan2(dy, dx);
+            const force = 0.1;
+            this.x -= Math.cos(angle) * force;
+            this.y -= Math.sin(angle) * force;
+            otherParticle.x += Math.cos(angle) * force;
+            otherParticle.y += Math.sin(angle) * force;
+          }
+        });
+      }
+    }
+
+    // Function to transition to the next portal/universe
+    function nextPortal() {
+      currentPortal++;
+      particlesArray.length = 0;
+      let newNumberOfParticles = numberOfParticles + currentPortal * 300;
+      for (let i = 0; i < newNumberOfParticles; i++) {
+        let x = Math.random() * canvas.width;
+        let y = Math.random() * canvas.height;
+        particlesArray.push(new Particle(x, y));
+      }
+
+      // Zoom into the next portal
+      zoomTarget *= 1.2; // Increase zoom target each time we transition
+      currentStoryIndex = (currentStoryIndex + 1) % story.length;
+    }
+
+    // Initialization of particles
+    function init() {
+      particlesArray.length = 0;
+      for (let i = 0; i < numberOfParticles; i++) {
+        let x = Math.random() * canvas.width;
+        let y = Math.random() * canvas.height;
+        particlesArray.push(new Particle(x, y));
+      }
+    }
+
+    // Animate function that constantly redraws the canvas
+    function animate() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.save();
+      zoomLevel += (zoomTarget - zoomLevel) * zoomSpeed;
+      ctx.translate(canvas.width / 2, canvas.height / 2);
+      ctx.scale(zoomLevel, zoomLevel);
+      ctx.translate(-canvas.width / 2, -canvas.height / 2);
+
+      for (let i = 0; i < particlesArray.length; i++) {
+        particlesArray[i].draw();
+        particlesArray[i].update();
+        particlesArray[i].checkCollision();
+      }
+
+      ctx.restore();
+
+      drawStoryText();
+
+      requestAnimationFrame(animate);
+    }
+
+    // Transition to next portal every 20 seconds
+    setInterval(nextPortal, 20000);
+
+    // Initializing the particles and animation
+    init();
+    animate();
+
+    // Resize canvas and reinitialize particles when window is resized
+    window.addEventListener('resize', () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      init();
+    });
+
+    // Mouse movement impact: Adding chaos to particles influenced by a butterfly-like effect
+    const mouse = {
+      x: null,
+      y: null,
+      radius: 150
+    };
+
+    window.addEventListener('mousemove', (event) => {
+      mouse.x = event.x;
+      mouse.y = event.y;
+
+      particlesArray.forEach((particle) => {
+        let dx = mouse.x - particle.x;
+        let dy = mouse.y - particle.y;
+        let distance = Math.sqrt(dx * dx + dy * dy);
+
+        if (distance < mouse.radius) {
+          particle.baseX += dx / distance * particle.density;
+          particle.baseY += dy / distance * particle.density;
+        }
+      });
+    });
+  </script>
+</body>
+</html>
